@@ -12,6 +12,7 @@ import {
 } from "type-graphql";
 import argon2 from "argon2";
 
+// Used for argument types
 @InputType()
 class UsernamePasswordInput {
   @Field()
@@ -20,6 +21,7 @@ class UsernamePasswordInput {
   password: string;
 }
 
+// Used for return types
 @ObjectType()
 class FieldError {
   @Field()

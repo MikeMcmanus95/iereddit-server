@@ -8,6 +8,7 @@ import {
   InputType,
   Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
   Root,
@@ -15,6 +16,7 @@ import {
 } from "type-graphql";
 import { Post } from "../entities/Post";
 import { getConnection } from "typeorm";
+import { FieldError } from "./user";
 
 @InputType()
 class PostInput {
@@ -22,6 +24,14 @@ class PostInput {
   title: string;
   @Field()
   text: string;
+}
+
+@ObjectType()
+class PostResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+  @Field(() => Post, { nullable: true })
+  post?: Post;
 }
 
 @Resolver(Post)
@@ -53,13 +63,36 @@ export class PostResolver {
     return Post.findOne(id);
   }
 
-  @Mutation(() => Post)
+  @Mutation(() => PostResponse)
   @UseMiddleware(isAuth)
   async createPost(
     @Arg("input") input: PostInput,
     @Ctx() { req }: MyContext
-  ): Promise<Post> {
-    return Post.create({ ...input, creatorId: req.session.userId }).save();
+  ): Promise<PostResponse> {
+    if (input.title.length < 2) {
+      return {
+        errors: [
+          {
+            field: "title",
+            message: "title must be more than two characters",
+          },
+        ],
+      };
+    } else if (input.text.length < 2) {
+      return {
+        errors: [
+          {
+            field: "text",
+            message: "body must contain at least two characters",
+          },
+        ],
+      };
+    }
+    const post = await Post.create({
+      ...input,
+      creatorId: req.session.userId,
+    }).save();
+    return { post };
   }
 
   @Mutation(() => Post, { nullable: true })

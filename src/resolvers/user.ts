@@ -19,7 +19,7 @@ import { getConnection } from "typeorm";
 
 // Used for return types
 @ObjectType()
-class FieldError {
+export class FieldError {
   @Field()
   field: string;
   @Field()
